@@ -13,7 +13,7 @@ void loop() {
   
   u8g.firstPage();
   do {
-    u8g.setContrast(100);
+    u8g.setContrast(110);
     //u8g.drawRFrame(0,0,83,47,3); //Frame general x,y,w,h,r
     u8g.drawRFrame(0,0,83,17,3); //Frame Data1
     u8g.drawRFrame(51,16,33,10,3); //Frame Data2

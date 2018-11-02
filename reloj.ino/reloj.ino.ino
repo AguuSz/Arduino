@@ -11,14 +11,16 @@ SoftwareSerial miBT(10, 11);
 #define CLK 7
 #define TIME_HEADER  "T"   // Header tag for serial time sync message
 #define TIME_REQUEST  7    // ASCII bell character requests a time sync message
-byte opcion = 0;
-char incomingData;
+boolean opcion = true;
+char incomingChar;
+
+
+boolean newData = false;
 
 U8GLIB_PCD8544 u8g(CLK, DIN, CE, DC, RST); //Pines a usar
 
 void setup() {
   Serial.begin(9600);
-  setSyncProvider( requestSync);  //set function to call when sync required
   Serial.println("Esperando mensaje de sincronizacion");
   u8g.setContrast(110);
   miBT.begin(38400);
@@ -28,47 +30,36 @@ void setup() {
 
 void loop() {
 
-  if (Serial.available()) {
-    processSyncMessage();
+  if (miBT.available() > 0) {
+    analizarInfo();
   }
-  if (timeStatus() != timeSet and opcion == 0) {
+  if (timeStatus() != timeSet and opcion = true ) {
 
     u8g.firstPage();
     do {
-      // BATERIA //
-
-      u8g.drawRFrame(0, 0, 20, 10, 3); // Frame de bateria
-      u8g.setFont(u8g_font_4x6);
-      u8g.setPrintPos(2, 7);
-      u8g.print("100%");
+      mostrarBateria();
 
       u8g.setFont(u8g_font_courB08);
+      u8g.setPrintPos(30, 14);
+      u8g.print("Hora");
       u8g.setPrintPos(32, 24);
-      u8g.print("Sin");
+      u8g.print("sin");
       u8g.setPrintPos(10, 34);
       u8g.print("Sincronizar");
 
-
-
     } while (u8g.nextPage());
-
 
   } else {
 
     u8g.firstPage();
     do {
-      opcion = 1;
+      opcion = false;
       u8g.drawRFrame(0, 0, 84, 48, 3);
       u8g.setFont(u8g_font_courB10);
 
-      // BATERIA //
+      mostrarBateria();
 
-      u8g.drawRFrame(0, 0, 20, 10, 3); // Frame de bateria
-      u8g.setFont(u8g_font_4x6);
-      u8g.setPrintPos(2, 7);
-      u8g.print("100%");;
-
-      // HORA
+      // Hora
 
       u8g.setFont(u8g_font_courB10);
       u8g.setPrintPos(45, 25); // Minutos
@@ -80,7 +71,7 @@ void loop() {
       u8g.print(hour());
 
 
-      // FECHA Y LINEA SEPARADORA
+      // Fecha y separador
       u8g.setFont(u8g_font_5x7);
       u8g.setPrintPos(10, 36);
       u8g.print("-------------");
@@ -107,18 +98,13 @@ void pantallaCarga() {
     u8g.setPrintPos(5, 35);
     u8g.print("Iniciando...");
   } while (u8g.nextPage());
-  delay(8000);
+  delay(6000);
 }
 
 void bienvenida() {
   u8g.firstPage();
   do {
-    // BATERIA //
-
-    u8g.drawRFrame(0, 0, 20, 10, 3); // Frame de bateria
-    u8g.setFont(u8g_font_4x6);
-    u8g.setPrintPos(2, 7);
-    u8g.print("100%");
+    mostrarBateria();
 
     u8g.setFont(u8g_font_7x14);
     u8g.setPrintPos(30, 20);
@@ -126,23 +112,46 @@ void bienvenida() {
     u8g.setPrintPos(5, 35);
     u8g.print("bienvenido!");
   } while (u8g.nextPage());
-  delay(5000);
+  delay(4000);
 }
 
-void processSyncMessage() {
-  unsigned long pctime;
-  const unsigned long DEFAULT_TIME = 1357041600; // Jan 1 2013
-
-  if (Serial.find(TIME_HEADER)) {
-    pctime = Serial.parseInt();
-    if ( pctime >= DEFAULT_TIME) { // Valida si el valor es valido (mayor a el 1 de enero de 2013)
-      setTime(pctime); // Sincroniza el reloj de arduino al valor recibido por el puerto serial
-    }
+void analizarInfo() {
+  incomingChar = miBT.read();
+  Serial.print(incomingChar);
+  if (incomingChar == 'w') {
+    u8g.firstPage();
+    do {
+      mostrarBateria();
+      u8g.drawRFrame(0, 0, 84, 48, 3);
+      u8g.setFont(u8g_font_6x12);
+      u8g.setPrintPos(3, 20);
+      u8g.print("Nuevo msj de");
+      u8g.setPrintPos(3, 35);
+      u8g.print("Whatsapp");
+    } while (u8g.nextPage());
+    delay(3000);
   }
-}
 
-time_t requestSync()
-{
-  Serial.write(TIME_REQUEST);
-  return 0; // El mensaje va a ser enviado luego en respuesta como un mensaje serial
+  if (incomingChar == 'i') {      // USAR SIEMPRE '' Y NUNCA "" PORQUE NO VA A FUNCIONAR
+    u8g.firstPage();
+    do {
+      mostrarBateria();
+      u8g.drawRFrame(0, 0, 84, 48, 3);
+      mostrarBateria();
+      u8g.setFont(u8g_font_6x12);
+      u8g.setPrintPos(3, 20);
+      u8g.print("Nuevo msj de");
+      u8g.setPrintPos(3, 35);
+      u8g.print("Instagram");
+    } while (u8g.nextPage());
+    delay(3000);
+  }
+
+void mostrarBateria() {
+  // Bateria //
+
+  u8g.drawRFrame(0, 0, 20, 9, 3); // Frame de la bateria
+  u8g.setFont(u8g_font_4x6);
+  u8g.setPrintPos(2, 7);
+  u8g.print("100%");
 }
